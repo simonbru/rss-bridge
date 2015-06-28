@@ -8,7 +8,7 @@ class MozillaFirefoxReleasesBridge extends BridgeAbstract{
 
     public function collectData(array $param){
         $html = '';
-        $link = 'http://ftp.mozilla.org/pub/mozilla.org/firefox/releases/';
+        $link = $this->getURI();
 
         $html = file_get_html($link) or $this->returnError('Could not request Mozilla FTP.', 403);
         
@@ -30,7 +30,7 @@ class MozillaFirefoxReleasesBridge extends BridgeAbstract{
                 
                 $this->items[] = $item;
         }
-	$this->items = array_reverse($this->items);
+        $this->items = array_reverse($this->items);
     }
 
     public function getName(){
@@ -42,7 +42,7 @@ class MozillaFirefoxReleasesBridge extends BridgeAbstract{
     }
 
     public function getCacheDuration(){
-        return 21600; // 6 hours
-        //return 1;
+        return 7200; // 2 hours
+        // return 1;
     }
 }
