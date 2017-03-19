@@ -4,36 +4,41 @@
 * @name MozillaFirefoxReleases
 * @description asd asd
 */
-class MozillaFirefoxReleasesBridge extends BridgeAbstract{
+class MozillaFirefoxReleasesBridge extends BridgeAbstract {
 
-    public function collectData(array $param){
+    public function collectData() {
         $html = '';
         $link = $this->getURI();
 
-        $html = file_get_html($link) or $this->returnError('Could not request Mozilla FTP.', 403);
-        
+        $errMsg = 'Could not request Mozilla FTP.';
+        $html = getSimpleHTMLDOM($link) or $this->returnError($errMsg, 403);
+
         $rows = $html->find('table tbody tr');
         foreach ($rows as $row)  {
-                $innertext = $row->find('td a', 0)->innertext;
-                
-                if (!is_numeric($innertext[0]))
-                        continue;
+            $innertext = $row->find('td a', 0)->innertext;
 
-                $item = new \Item();
-                $version = rtrim($innertext, '/');
-                
-                $item->title = $version;
-                $item->uri = $link.$innertext;
-                $item->content = '<a href="'.$item->uri.'">'.$item->uri.'</a>';
-                // $item->timestamp = strtotime($row->find("td")[2]->innertext);
-                
-                $this->items[] = $item;
+            if (!is_numeric($innertext[0]))
+                    continue;
+
+            $version = rtrim($innertext, '/');
+
+            $title = $version;
+            $uri = $link.$innertext;
+            $content = '<a href="'.$uri.'">'.$uri.'</a>';
+            // $item->timestamp = strtotime($row->find("td")[2]->innertext);
+
+            $this->items[] = array(
+                'title' => $title,
+                'version' => $version,
+                'uri' => $uri,
+                'content' => $content
+            );
         }
 
         usort($this->items, function($itema, $itemb) {
             return $this->my_version_compare(
-                $this->version_parts($itema->title),
-                $this->version_parts($itemb->title)
+                $this->version_parts($itema['title']),
+                $this->version_parts($itemb['title'])
             );
         });
         $this->items = array_reverse($this->items);

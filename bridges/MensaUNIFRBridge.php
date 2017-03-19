@@ -4,31 +4,31 @@
 * @name Mensa UNIFR Bridge
 * @description asd
 */
-class MensaUNIFRBridge extends BridgeAbstract{
+class MensaUNIFRBridge extends BridgeAbstract {
 
-    public function collectData(array $param){
+    public function collectData() {
         $html = '';
         $link = 'http://www.unifr.ch/mensa/fr/menu/week';
 
-        $html = file_get_html($link) or $this->returnError('Could not request MensaUNIFR.', 404);
-        
+        $html = getSimpleHTMLDOM($link) or $this->returnError('Could not request MensaUNIFR.', 404);
+
         $rows = $html->find('div#content table tr');
         $titles = $rows[0]->find('td');
         $menus = $rows[4]->find('td');
         for ($i=0; $i<5; $i++) {
-                $item = new \Item();
-                
-                
-                $item->title = $titles[$i]->plaintext;
-                //var_dump($titles[$i]->plaintext);
-                $item->content = $menus[$i]->innertext;
-                //$item->title = "asd";
-                //$item->content = "asdasd";
-                $id = md5($item->title . $item->content);
-                $item->uri = "http://www.unifr.ch/mensa/fr/menu/week?uid=".$id;
-                $this->items[] = $item;
+            $title = $titles[$i]->plaintext;
+            $content = $menus[$i]->innertext;
+
+            $id = md5($title . $content);
+            $uri = "http://www.unifr.ch/mensa/fr/menu/week?uid=".$id;
+
+            $this->items[] = array(
+                "title" => $title,
+                "content" => $content,
+                "uri" => $uri
+            );
         }
-	$this->items = array_reverse($this->items);
+        $this->items = array_reverse($this->items);
     }
 
     public function getName(){
