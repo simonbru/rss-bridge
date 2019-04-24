@@ -14,7 +14,7 @@ class MozillaFirefoxCandidatesBridge extends MozillaFirefoxReleasesBridge {
     }
 
     public function getURI(){
-        return 'http://ftp.mozilla.org/pub/mozilla.org/firefox/candidates/';
+        return 'https://ftp.mozilla.org/pub/mozilla.org/firefox/candidates/';
     }
 
 }

@@ -9,11 +9,9 @@ class MozillaFirefoxReleasesBridge extends BridgeAbstract {
     public function collectData() {
         $html = '';
         $link = $this->getURI();
-
         $errMsg = 'Could not request Mozilla FTP.';
         $html = getSimpleHTMLDOM($link) or $this->returnError($errMsg, 403);
-
-        $rows = $html->find('table tbody tr');
+        $rows = $html->find('table tr');
         foreach ($rows as $row)  {
             $innertext = $row->find('td a', 0)->innertext;
 
@@ -49,7 +47,7 @@ class MozillaFirefoxReleasesBridge extends BridgeAbstract {
     }
 
     public function getURI(){
-        return 'http://ftp.mozilla.org/pub/firefox/releases/';
+        return 'https://ftp.mozilla.org/pub/firefox/releases/';
     }
 
     public function getCacheDuration(){
