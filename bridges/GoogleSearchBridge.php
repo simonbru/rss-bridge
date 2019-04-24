@@ -17,7 +17,7 @@ class GoogleSearchBridge extends BridgeAbstract {
 
 	const PARAMETERS = array(array(
 		'q' => array(
-			'name' => "keyword",
+			'name' => 'keyword',
 			'required' => true
 		)
 	));
@@ -28,7 +28,7 @@ class GoogleSearchBridge extends BridgeAbstract {
 		$html = getSimpleHTMLDOM(self::URI
 		. 'search?q='
 		. urlencode($this->getInput('q'))
-		.'&num=100&complete=0&tbs=qdr:y,sbd:1')
+		. '&num=100&complete=0&tbs=qdr:y,sbd:1')
 			or returnServerError('No results for this query.');
 
 		$emIsRes = $html->find('div[id=ires]', 0);

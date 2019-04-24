@@ -25,6 +25,10 @@ class PinterestBridge extends FeedExpander {
 		)
 	);
 
+	public function getIcon() {
+		return 'https://s.pinimg.com/webapp/style/images/favicon-9f8f9adf.png';
+	}
+
 	public function collectData(){
 		switch($this->queriedContext) {
 			case 'By username and board':
@@ -44,7 +48,7 @@ class PinterestBridge extends FeedExpander {
 		$pattern = '/https\:\/\/i\.pinimg\.com\/[a-zA-Z0-9]*x\//';
 		foreach($this->items as $item) {
 
-			$item["content"] = preg_replace($pattern, 'https://i.pinimg.com/originals/', $item["content"]);
+			$item['content'] = preg_replace($pattern, 'https://i.pinimg.com/originals/', $item['content']);
 			$newitems[] = $item;
 		}
 		$this->items = $newitems;
@@ -64,10 +68,10 @@ class PinterestBridge extends FeedExpander {
 			// provide even less info. Thus we attempt multiple options.
 			$item['title'] = trim($result['title']);
 
-			if($item['title'] === "")
+			if($item['title'] === '')
 				$item['title'] = trim($result['rich_summary']['display_name']);
 
-			if($item['title'] === "")
+			if($item['title'] === '')
 				$item['title'] = trim($result['grid_description']);
 
 			$item['timestamp'] = strtotime($result['created_at']);

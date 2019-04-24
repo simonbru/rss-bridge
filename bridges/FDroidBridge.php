@@ -11,13 +11,16 @@ class FDroidBridge extends BridgeAbstract {
 		'u' => array(
 			'name' => 'Widget selection',
 			'type' => 'list',
-			'required' => true,
 			'values' => array(
 				'Latest added apps' => 'added',
 				'Latest updated apps' => 'updated'
 			)
 		)
 	));
+
+	public function getIcon() {
+		return self::URI . 'assets/favicon.ico?v=8j6PKzW9Mk';
+	}
 
 	public function collectData(){
 		$url = self::URI;
@@ -45,9 +48,9 @@ class FDroidBridge extends BridgeAbstract {
 				$item['icon'] = $element->find('img', 0)->src;
 				$item['summary'] = $element->find('span.package-summary', 0)->plaintext;
 				$item['content'] = '
-					<a href="'.$item['uri'].'">
-						<img alt="" style="max-height:128px" src="'.$item['icon'].'">
-					</a><br>'.$item['summary'];
+					<a href="' . $item['uri'] . '">
+						<img alt="" style="max-height:128px" src="' . $item['icon'] . '">
+					</a><br>' . $item['summary'];
 				$this->items[] = $item;
 		}
 	}

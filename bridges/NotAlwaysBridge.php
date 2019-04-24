@@ -21,10 +21,13 @@ class NotAlwaysBridge extends BridgeAbstract {
 								'Friendly' => 'friendly',
 								'Hopeless' => 'hopeless',
 								'Unfiltered' => 'unfiltered'
-						),
-						'required' => true
+						)
 				)
 		));
+
+		public function getIcon() {
+			return self::URI . 'favicon_nar.png';
+		}
 
 		public function collectData(){
 				$html = getSimpleHTMLDOM($this->getURI())
@@ -49,7 +52,7 @@ class NotAlwaysBridge extends BridgeAbstract {
 
 		public function getURI(){
 				if(!is_null($this->getInput('filter'))) {
-						return self::URI . $this->getInput('filter') . "/";
+						return self::URI . $this->getInput('filter') . '/';
 				}
 
 				return parent::getURI();

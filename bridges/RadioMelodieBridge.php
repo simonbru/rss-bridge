@@ -5,6 +5,10 @@ class RadioMelodieBridge extends BridgeAbstract {
 	const DESCRIPTION = 'Retourne les actualités publiées par Radio Melodie';
 	const MAINTAINER = 'sysadminstory';
 
+	public function getIcon() {
+		return self::URI . 'img/favicon.png';
+	}
+
 	public function collectData(){
 		$html = getSimpleHTMLDOM(self::URI . 'actu')
 			or returnServerError('Could not request Radio Melodie.');
@@ -23,7 +27,7 @@ class RadioMelodieBridge extends BridgeAbstract {
 			$item['enclosures'] = array($pictureURL);
 			$item['uri'] = self::URI . $element->parent()->href;
 			$item['title'] = $element->find('h3', 0)->plaintext;
-			$item['content'] = $element->find('p', 0)->plaintext . '<br/><img src="'.$pictureURL.'"/>';
+			$item['content'] = $element->find('p', 0)->plaintext . '<br/><img src="' . $pictureURL . '"/>';
 			$this->items[] = $item;
 		}
 	}

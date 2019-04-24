@@ -25,14 +25,14 @@ class YoutubeBridge extends BridgeAbstract {
 		'By channel id' => array(
 			'c' => array(
 				'name' => 'channel id',
-				'exampleValue' => "15",
+				'exampleValue' => '15',
 				'required' => true
 			)
 		),
 		'By playlist Id' => array(
 			'p' => array(
 				'name' => 'playlist id',
-				'exampleValue' => "15"
+				'exampleValue' => '15'
 			)
 		),
 		'Search result' => array(
@@ -45,8 +45,24 @@ class YoutubeBridge extends BridgeAbstract {
 				'type' => 'number',
 				'exampleValue' => 1
 			)
+		),
+		'global' => array(
+			'duration_min' => array(
+				'name' => 'min. duration (minutes)',
+				'type' => 'number',
+				'title' => 'Minimum duration for the video in minutes',
+				'exampleValue' => 5
+			),
+			'duration_max' => array(
+				'name' => 'max. duration (minutes)',
+				'type' => 'number',
+				'title' => 'Maximum duration for the video in minutes',
+				'exampleValue' => 10
+			)
 		)
 	);
+
+	private $feedName = '';
 
 	private function ytBridgeQueryVideoInfo($vid, &$author, &$desc, &$time){
 		$html = $this->ytGetSimpleHTMLDOM(self::URI . "watch?v=$vid");
@@ -113,6 +129,17 @@ class YoutubeBridge extends BridgeAbstract {
 	private function ytBridgeParseHtmlListing($html, $element_selector, $title_selector, $add_parsed_items = true) {
 		$limit = $add_parsed_items ? 10 : INF;
 		$count = 0;
+
+		$duration_min = $this->getInput('duration_min') ?: -1;
+		$duration_min = $duration_min * 60;
+
+		$duration_max = $this->getInput('duration_max') ?: INF;
+		$duration_max = $duration_max * 60;
+
+		if($duration_max < $duration_min) {
+			returnClientError('Max duration must be greater than min duration!');
+		}
+
 		foreach($html->find($element_selector) as $element) {
 			if($count < $limit) {
 				$author = '';
@@ -120,14 +147,33 @@ class YoutubeBridge extends BridgeAbstract {
 				$time = 0;
 				$vid = str_replace('/watch?v=', '', $element->find('a', 0)->href);
 				$vid = substr($vid, 0, strpos($vid, '&') ?: strlen($vid));
-				$title = $this->ytBridgeFixTitle($element->find($title_selector, 0)->plaintext);
-				if($title != '[Private Video]' && strpos($vid, 'googleads') === false) {
-					if ($add_parsed_items) {
-						$this->ytBridgeQueryVideoInfo($vid, $author, $desc, $time);
-						$this->ytBridgeAddItem($vid, $title, $author, $desc, $time);
-					}
-					$count++;
+				$title = trim($this->ytBridgeFixTitle($element->find($title_selector, 0)->plaintext));
+
+				if (strpos($vid, 'googleads') !== false
+					|| $title == '[Private video]'
+					|| $title == '[Deleted video]'
+				) {
+					continue;
 				}
+
+				// The duration comes in one of the formats:
+				// hh:mm:ss / mm:ss / m:ss
+				// 01:03:30 / 15:06 / 1:24
+				$durationText = trim($element->find('div.timestamp span', 0)->plaintext);
+				$durationText = preg_replace('/([\d]{1,2})\:([\d]{2})/', '00:$1:$2', $durationText);
+
+				sscanf($durationText, '%d:%d:%d', $hours, $minutes, $seconds);
+				$duration = $hours * 3600 + $minutes * 60 + $seconds;
+
+				if($duration < $duration_min || $duration > $duration_max) {
+					continue;
+				}
+
+				if ($add_parsed_items) {
+					$this->ytBridgeQueryVideoInfo($vid, $author, $desc, $time);
+					$this->ytBridgeAddItem($vid, $title, $author, $desc, $time);
+				}
+				$count++;
 			}
 		}
 		return $count;
@@ -140,7 +186,9 @@ class YoutubeBridge extends BridgeAbstract {
 
 	private function ytGetSimpleHTMLDOM($url){
 		return getSimpleHTMLDOM($url,
-			$header = array(),
+			$header = array(
+				'Accept-Language: en-US'
+			),
 			$opts = array(),
 			$lowercase = true,
 			$forceTagsClosed = true,
@@ -168,7 +216,7 @@ class YoutubeBridge extends BridgeAbstract {
 		}
 
 		if(!empty($url_feed) && !empty($url_listing)) {
-			if($xml = $this->ytGetSimpleHTMLDOM($url_feed)) {
+			if(!$this->skipFeeds() && $xml = $this->ytGetSimpleHTMLDOM($url_feed)) {
 				$this->ytBridgeParseXmlFeed($xml);
 			} elseif($html = $this->ytGetSimpleHTMLDOM($url_listing)) {
 				$this->ytBridgeParseHtmlListing($html, 'li.channels-content-item', 'h3');
@@ -182,7 +230,7 @@ class YoutubeBridge extends BridgeAbstract {
 			$html = $this->ytGetSimpleHTMLDOM($url_listing)
 				or returnServerError("Could not request YouTube. Tried:\n - $url_listing");
 			$item_count = $this->ytBridgeParseHtmlListing($html, 'tr.pl-video', '.pl-video-title a', false);
-			if ($item_count <= 15 && ($xml = $this->ytGetSimpleHTMLDOM($url_feed))) {
+			if ($item_count <= 15 && !$this->skipFeeds() && ($xml = $this->ytGetSimpleHTMLDOM($url_feed))) {
 				$this->ytBridgeParseXmlFeed($xml);
 			} else {
 				$this->ytBridgeParseHtmlListing($html, 'tr.pl-video', '.pl-video-title a');
@@ -195,7 +243,7 @@ class YoutubeBridge extends BridgeAbstract {
 			$this->request = $this->getInput('s');
 			$page = 1;
 			if($this->getInput('pa'))
-				$page = (int)preg_replace("/[^0-9]/", '', $this->getInput('pa'));
+				$page = (int)preg_replace('/[^0-9]/', '', $this->getInput('pa'));
 
 			$url_listing = self::URI
 			. 'results?search_query='
@@ -215,6 +263,10 @@ class YoutubeBridge extends BridgeAbstract {
 		}
 	}
 
+	private function skipFeeds() {
+		return ($this->getInput('duration_min') || $this->getInput('duration_max'));
+	}
+
 	public function getName(){
 	  // Name depends on queriedContext:
 		switch($this->queriedContext) {
@@ -226,5 +278,5 @@ class YoutubeBridge extends BridgeAbstract {
 		default:
 			return parent::getName();
 		}
-  }
+	}
 }

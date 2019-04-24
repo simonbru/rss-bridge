@@ -13,6 +13,10 @@ class SupInfoBridge extends BridgeAbstract {
 		)
 	));
 
+	public function getIcon() {
+		return self::URI . '/favicon.png';
+	}
+
 	public function collectData() {
 
 		if(empty($this->getInput('tag'))) {
@@ -31,7 +35,7 @@ class SupInfoBridge extends BridgeAbstract {
 		}
 	}
 
-	public function fetchArticle($link) {
+	private function fetchArticle($link) {
 
 		$articleHTML = getSimpleHTMLDOM(self::URI . $link)
 			or returnServerError('Unable to fetch article !');
@@ -53,5 +57,4 @@ class SupInfoBridge extends BridgeAbstract {
 		return $item;
 
 	}
-
 }

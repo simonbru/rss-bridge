@@ -3,7 +3,7 @@ class JapanExpoBridge extends BridgeAbstract {
 
 	const MAINTAINER = 'Ginko';
 	const NAME = 'Japan Expo Actualités';
-	const URI = 'http://www.japan-expo-paris.com/fr/actualites';
+	const URI = 'https://www.japan-expo-paris.com/fr/actualites';
 	const CACHE_TIMEOUT = 14400; // 4h
 	const DESCRIPTION = 'Returns most recent entries from Japan Expo actualités.';
 	const PARAMETERS = array( array(
@@ -12,6 +12,10 @@ class JapanExpoBridge extends BridgeAbstract {
 			'type' => 'checkbox',
 		)
 	));
+
+	public function getIcon() {
+		return 'https://s.japan-expo.com/katana/images/JES073/favicons/paris.png';
+	}
 
 	public function collectData(){
 
@@ -51,7 +55,7 @@ class JapanExpoBridge extends BridgeAbstract {
 		foreach($html->find('a._tile2') as $element) {
 
 			$url = $element->href;
-			$thumbnail = 'http://s.japan-expo.com/katana/images/JES049/paris.png';
+			$thumbnail = 'https://s.japan-expo.com/katana/images/JES049/paris.png';
 			preg_match('/url\(([^)]+)\)/', $element->find('img.rspvimgset', 0)->style, $img_search_result);
 
 			if(count($img_search_result) >= 2)
@@ -62,7 +66,8 @@ class JapanExpoBridge extends BridgeAbstract {
 					break;
 				}
 
-				$article_html = getSimpleHTMLDOMCached('Could not request JapanExpo: ' . $url);
+				$article_html = getSimpleHTMLDOMCached($url)
+				or returnServerError('Could not request JapanExpo: ' . $url);
 				$header = $article_html->find('header.pageHeadBox', 0);
 				$timestamp = strtotime($header->find('time', 0)->datetime);
 				$title_html = $header->find('div.section', 0)->next_sibling();
@@ -92,6 +97,7 @@ class JapanExpoBridge extends BridgeAbstract {
 			$item['uri'] = $url;
 			$item['title'] = $title;
 			$item['timestamp'] = $timestamp;
+			$item['enclosures'] = array($thumbnail);
 			$item['content'] = $content;
 			$this->items[] = $item;
 			$count++;

@@ -45,9 +45,10 @@ class ElloBridge extends BridgeAbstract {
 			$item = array();
 			$item['author'] = $this->getUsername($post, $postData);
 			$item['timestamp'] = strtotime($post->created_at);
-			$item['title'] = $this->findText($post->summary);
+			$item['title'] = strip_tags($this->findText($post->summary));
 			$item['content'] = $this->getPostContent($post->body);
 			$item['enclosures'] = $this->getEnclosures($post, $postData);
+			$item['uri'] = self::URI . $item['author'] . '/post/' . $post->token;
 			$content = $post->body;
 
 			$this->items[] = $item;
@@ -57,7 +58,7 @@ class ElloBridge extends BridgeAbstract {
 
 	}
 
-	public function findText($path) {
+	private function findText($path) {
 
 		foreach($path as $summaryElement) {
 
@@ -71,7 +72,7 @@ class ElloBridge extends BridgeAbstract {
 
 	}
 
-	public function getPostContent($path) {
+	private function getPostContent($path) {
 
 		$content = '';
 		foreach($path as $summaryElement) {
@@ -92,7 +93,7 @@ class ElloBridge extends BridgeAbstract {
 
 	}
 
-	public function getEnclosures($post, $postData) {
+	private function getEnclosures($post, $postData) {
 
 		$assets = [];
 		foreach($post->links->assets as $asset) {
@@ -108,7 +109,7 @@ class ElloBridge extends BridgeAbstract {
 
 	}
 
-	public function getUsername($post, $postData) {
+	private function getUsername($post, $postData) {
 
 		foreach($postData->linked->users as $user) {
 			if($user->id == $post->links->author->id) {
@@ -118,9 +119,9 @@ class ElloBridge extends BridgeAbstract {
 
 	}
 
-	public function getAPIKey() {
-		$cache = Cache::create('FileCache');
-		$cache->setPath(CACHE_DIR);
+	private function getAPIKey() {
+		$cache = Cache::create(Configuration::getConfig('cache', 'type'));
+		$cache->setPath(PATH_CACHE);
 		$cache->setParameters(['key']);
 		$key = $cache->loadData();
 
@@ -142,5 +143,4 @@ class ElloBridge extends BridgeAbstract {
 
 		return parent::getName();
 	}
-
 }
